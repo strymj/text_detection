@@ -22,5 +22,5 @@ TESSDATA_PREFIX=/home/username/tesseract)
 
 5. launch
 $ roslaunch text_detection text_detection.launch
-(need usb_cam)
+(required usb_cam)
 
