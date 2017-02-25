@@ -16,11 +16,14 @@ $ sudo ldconfig
 $ git clone https://github.com/tesseract-ocr/tessdata
 
 4. set environment variable  
-$ export TESSDATA_PREFIX=/some/path/to/tessdata  
-(ex. tessdata location : /home/username/tesseract/tessdata  
-TESSDATA_PREFIX=/home/username/tesseract)
+$ export TESSDATA_PREFIX=/home/username/tesseract 
+ ex) tessdata location : /home/username/tesseract/tessdata  
+
 
 5. launch
 $ roslaunch text_detection text_detection.launch
+please change paramater yourself
+
+$ roslaunch text_detection text_detection_usbcam.launch
 (required usb_cam)
 

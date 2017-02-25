@@ -29,17 +29,18 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
 int main(int argc, char* argv[])
 {
-	ros::init(argc,argv,"cardkey_textdetector");
+	ros::init(argc,argv,"text_detection");
 	ros::NodeHandle node_("~");
 
-	string camera_topic_, tessdata_path_, tessdata_language_;
+	string camera_topic_, image_, tessdata_path_, tessdata_language_;
 	int camera_framerate_;
 	char path[64], language[64];
 	node_.param("camera_topic", camera_topic_, string("/usb_cam/image_raw"));
 	node_.param("camera_framerate", camera_framerate_, 30);
-	node_.param("tessdata_path", tessdata_path_, string("/home/"));
-	node_.param("tessdata_language", tessdata_language_, string("eng"));
-	
+	node_.param("image", image_, string("none"));
+	node_.param("tessdata_path", tessdata_path_, string("/home/username/tesseract"));
+	node_.param("language", tessdata_language_, string("eng"));
+
 	sprintf(path, "%s", tessdata_path_.c_str());
 	sprintf(language, "%s", tessdata_language_.c_str());
 	ros::Rate loop_rate(camera_framerate_);
@@ -51,27 +52,42 @@ int main(int argc, char* argv[])
 
 	char *outText;
 	tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
+	if (api->Init(path, language)) {
+		fprintf(stderr, "Could not initialize tesseract.\n");
+		exit(1);
+	}
 
-	while(ros::ok()) {
+	if(image_ != "none") {
+		cout<<"image : "<<image_<<endl<<endl;
+		original_img = cv::imread(image_);
+		cv::cvtColor(original_img, gray, CV_RGB2GRAY);
+		cv::threshold(gray, gray, 0, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
+		api->SetImage((uchar*)gray.data, gray.size().width, gray.size().height, gray.channels(), gray.step1());
+		outText = api->GetUTF8Text();
+
+		cout<<"<text>"<<endl;
+		cout<<(string){outText}<<endl;
+		cout<<endl;
+	}
+
+	while(ros::ok() && image_=="none") {
 		if(image_sub) {
 			cv::cvtColor(original_img, gray, CV_RGB2GRAY);
-			if (api->Init(path, language)) {
-				fprintf(stderr, "Could not initialize tesseract.\n");
-				exit(1);
-			}
+			cv::threshold(gray, gray, 0, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
 			api->SetImage((uchar*)gray.data, gray.size().width, gray.size().height, gray.channels(), gray.step1());
 			outText = api->GetUTF8Text();
-			
+
 			text_msg.data = (string){outText};
 			text_pub.publish(text_msg);
-
-			// Destroy used object and release memory
-			api->End();
-			delete [] outText;
 		}
 		image_sub = false;
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
+
+	// Destroy used object and release memory
+	api->End();
+	delete [] outText;
+
 	return 0;
 }
