@@ -32,17 +32,17 @@ int main(int argc, char* argv[])
 	ros::init(argc,argv,"text_detection");
 	ros::NodeHandle node_("~");
 
-	string camera_topic_, image_, tessdata_path_, tessdata_language_;
+	string camera_topic_, image_, tessdata_path_, language_;
 	int camera_framerate_;
 	char path[64], language[64];
 	node_.param("camera_topic", camera_topic_, string("/usb_cam/image_raw"));
 	node_.param("camera_framerate", camera_framerate_, 30);
 	node_.param("image", image_, string("none"));
 	node_.param("tessdata_path", tessdata_path_, string("/home/username/tesseract"));
-	node_.param("language", tessdata_language_, string("eng"));
+	node_.param("language", language_, string("eng"));
 
 	sprintf(path, "%s", tessdata_path_.c_str());
-	sprintf(language, "%s", tessdata_language_.c_str());
+	sprintf(language, "%s", language_.c_str());
 	ros::Rate loop_rate(camera_framerate_);
 
 	image_transport::ImageTransport it(node_);
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
 	char *outText;
 	tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
-	if (api->Init(path, language)) {
+	if (api->Init(tessdata_path_.c_str(), language_.c_str())) {
 		fprintf(stderr, "Could not initialize tesseract.\n");
 		exit(1);
 	}

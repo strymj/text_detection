@@ -16,7 +16,7 @@ $ sudo ldconfig
 $ git clone https://github.com/tesseract-ocr/tessdata
 
 4. set environment variable  
-$ export TESSDATA_PREFIX=/home/username/tesseract 
+$ export TESSDATA_PREFIX=/home/username/tesseract   
  ex) tessdata location : /home/username/tesseract/tessdata  
 
 
