@@ -1,13 +1,13 @@
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <iostream>
+#include <string.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <tesseract/baseapi.h>
-#include <string.h>
 #include <leptonica/allheaders.h>
 using namespace std;
 
@@ -40,15 +40,12 @@ int main(int argc, char* argv[])
 	node_.param("image", image_, string("none"));
 	node_.param("tessdata_path", tessdata_path_, string("/home/username/tesseract"));
 	node_.param("language", language_, string("eng"));
-
-	sprintf(path, "%s", tessdata_path_.c_str());
-	sprintf(language, "%s", language_.c_str());
 	ros::Rate loop_rate(camera_framerate_);
 
 	image_transport::ImageTransport it(node_);
 	image_transport::Subscriber camera_sub = it.subscribe(camera_topic_, 1, imageCallback);
-	ros::Publisher text_pub = node_.advertise<std_msgs::String>("text",1);
 	std_msgs::String text_msg;
+	ros::Publisher text_pub = node_.advertise<std_msgs::String>("text",1);
 
 	char *outText;
 	tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
@@ -58,36 +55,37 @@ int main(int argc, char* argv[])
 	}
 
 	if(image_ != "none") {
-		cout<<"image : "<<image_<<endl<<endl;
 		original_img = cv::imread(image_);
-		cv::cvtColor(original_img, gray, CV_RGB2GRAY);
-		cv::threshold(gray, gray, 0, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
-		api->SetImage((uchar*)gray.data, gray.size().width, gray.size().height, gray.channels(), gray.step1());
-		outText = api->GetUTF8Text();
-
-		cout<<"<text>"<<endl;
-		cout<<(string){outText}<<endl;
-		cout<<endl;
+		if(original_img.data) {
+			cout<<"image : "<<image_<<endl;
+		}
+		else {
+			cout<<"cannot open "<<image_<<endl;
+		}
 	}
 
-	while(ros::ok() && image_=="none") {
-		if(image_sub) {
+	do {
+		if(image_sub || original_img.data) {
 			cv::cvtColor(original_img, gray, CV_RGB2GRAY);
 			cv::threshold(gray, gray, 0, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
 			api->SetImage((uchar*)gray.data, gray.size().width, gray.size().height, gray.channels(), gray.step1());
 			outText = api->GetUTF8Text();
 
+			cout<<"<text>"<<endl;
+			cout<<(string){outText}<<endl;
+			cout<<endl;
+
 			text_msg.data = (string){outText};
 			text_pub.publish(text_msg);
+
+			delete [] outText;
 		}
 		image_sub = false;
 		ros::spinOnce();
 		loop_rate.sleep();
-	}
+	} while(ros::ok() && image_=="none");
 
-	// Destroy used object and release memory
 	api->End();
-	delete [] outText;
 
 	return 0;
 }
