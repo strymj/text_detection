@@ -5,7 +5,7 @@
   <node name="text_detection" pkg="text_detection" type="text_detection" output="screen">
     <param name="tessdata_path" value="/home/strymj/tesseract/tessdata/" />
     <param name="language" value="eng" />
-	<param name="image" value="/home/strymj/text.jpg" />
+	<param name="image" value="/home/strymj/text.png" />
   </node>
 
 </launch>

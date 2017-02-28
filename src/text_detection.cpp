@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <iostream>
+#include <fstream>
 #include <string.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -71,12 +72,19 @@ int main(int argc, char* argv[])
 			api->SetImage((uchar*)gray.data, gray.size().width, gray.size().height, gray.channels(), gray.step1());
 			outText = api->GetUTF8Text();
 
+			text_msg.data = (string){outText};
+			text_pub.publish(text_msg);
+
 			cout<<"<text>"<<endl;
 			cout<<(string){outText}<<endl;
 			cout<<endl;
 
-			text_msg.data = (string){outText};
-			text_pub.publish(text_msg);
+			if(image_ != "none") {
+				string outfile = image_.erase(image_.rfind(".")) + ".txt";
+				cout<<"Writing text -> "<<outfile<<endl;
+				ofstream ofs(outfile.c_str());
+				ofs << (string){outText};
+			}
 
 			delete [] outText;
 		}
